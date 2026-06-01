@@ -6,9 +6,7 @@
 
 <title>360 Viewer</title>
 
-<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/pannellum/build/pannellum.css">
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum/build/pannellum.css">
 <script src="https://cdn.jsdelivr.net/npm/pannellum/build/pannellum.js"></script>
 
 <style>
@@ -22,29 +20,40 @@ font-family:sans-serif;
 .toolbar{
 padding:10px;
 background:#222;
+font-size:14px;
 }
 
-  .title{
-font-size:14px;
-margin-bottom:8px;
+.title{
 font-weight:bold;
+margin-bottom:8px;
 }
 
 .version{
-opacity:0.6;
+opacity:.6;
 font-size:12px;
 margin-left:6px;
 font-weight:normal;
 }
-  
-#panorama{
-width:100vw;
-height:calc(100vh - 60px);
+
+.controls{
+display:grid;
+gap:6px;
 }
 
-input{
-width:100%;
+input,select,button{
 font-size:16px;
+width:100%;
+box-sizing:border-box;
+}
+
+label{
+font-size:12px;
+opacity:.85;
+}
+
+#panorama{
+width:100vw;
+height:calc(100vh - 230px);
 }
 </style>
 </head>
@@ -52,47 +61,114 @@ font-size:16px;
 <body>
 
 <div class="toolbar">
-<div class="title">
-360 Viewer
-<span class="version">v0.1.0</span>
-</div>
+  <div class="title">360 Viewer <span class="version">v1.0.0</span></div>
 
-<input type="file" accept="image/*" id="imageInput">
+  <div class="controls">
+    <input type="file" accept="image/*" id="imageInput">
+
+    <select id="mode">
+      <option value="photosynth">Photosynth</option>
+      <option value="standard">Standard</option>
+      <option value="wide">Wide</option>
+      <option value="full">Full 360</option>
+    </select>
+
+    <label>横の広がり HAOV: <span id="haovValue">240</span>°</label>
+    <input type="range" id="haov" min="120" max="360" value="240">
+
+    <label>縦の広がり VAOV: <span id="vaovValue">120</span>°</label>
+    <input type="range" id="vaov" min="60" max="180" value="120">
+
+    <label>上下位置 vOffset: <span id="vOffsetValue">0</span>°</label>
+    <input type="range" id="vOffset" min="-60" max="60" value="0">
+
+    <label>初期ズーム HFOV: <span id="hfovValue">100</span>°</label>
+    <input type="range" id="hfov" min="40" max="120" value="100">
+
+    <button id="reset">リセット</button>
+  </div>
 </div>
 
 <div id="panorama"></div>
 
 <script>
-
 let viewer = null;
+let imageUrl = null;
 
-document.getElementById("imageInput")
-.addEventListener("change", function(e){
+const presets = {
+  photosynth:{haov:240, vaov:120, vOffset:0, hfov:100},
+  standard:{haov:180, vaov:90, vOffset:0, hfov:90},
+  wide:{haov:300, vaov:140, vOffset:0, hfov:100},
+  full:{haov:360, vaov:180, vOffset:0, hfov:100}
+};
 
-const file = e.target.files[0];
+const ids = ["haov","vaov","vOffset","hfov"];
 
-if(!file) return;
-
-const imageUrl = URL.createObjectURL(file);
-
-if(viewer){
-viewer.destroy();
+function updateLabels(){
+  ids.forEach(id=>{
+    document.getElementById(id + "Value").textContent =
+    document.getElementById(id).value;
+  });
 }
 
-viewer = pannellum.viewer("panorama",{
-type:"equirectangular",
-panorama:imageUrl,
-autoLoad:true,
-haov:240,
-vaov:120,
-vOffset:0,
-hfov:100,
-minHfov:50,
-maxHfov:120
+function applyPreset(name){
+  const p = presets[name];
+  ids.forEach(id=>{
+    document.getElementById(id).value = p[id];
+  });
+  updateLabels();
+  renderViewer();
+}
+
+function renderViewer(){
+  if(!imageUrl) return;
+
+  if(viewer){
+    viewer.destroy();
+  }
+
+  viewer = pannellum.viewer("panorama",{
+    type:"equirectangular",
+    panorama:imageUrl,
+    autoLoad:true,
+    showControls:true,
+    haov:Number(document.getElementById("haov").value),
+    vaov:Number(document.getElementById("vaov").value),
+    vOffset:Number(document.getElementById("vOffset").value),
+    hfov:Number(document.getElementById("hfov").value),
+    minHfov:40,
+    maxHfov:120
+  });
+}
+
+document.getElementById("imageInput").addEventListener("change",function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  if(imageUrl){
+    URL.revokeObjectURL(imageUrl);
+  }
+
+  imageUrl = URL.createObjectURL(file);
+  renderViewer();
 });
 
+document.getElementById("mode").addEventListener("change",function(){
+  applyPreset(this.value);
 });
 
+ids.forEach(id=>{
+  document.getElementById(id).addEventListener("input",function(){
+    updateLabels();
+    renderViewer();
+  });
+});
+
+document.getElementById("reset").addEventListener("click",function(){
+  applyPreset(document.getElementById("mode").value);
+});
+
+updateLabels();
 </script>
 
 </body>
