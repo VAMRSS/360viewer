@@ -1,1 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
+<title>360 Viewer</title>
+
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/pannellum/build/pannellum.css">
+
+<script src="https://cdn.jsdelivr.net/npm/pannellum/build/pannellum.js"></script>
+
+<style>
+body{
+margin:0;
+background:#111;
+color:white;
+font-family:sans-serif;
+}
+
+.toolbar{
+padding:10px;
+background:#222;
+}
+
+#panorama{
+width:100vw;
+height:calc(100vh - 60px);
+}
+
+input{
+width:100%;
+font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="toolbar">
+<input type="file" accept="image/*" id="imageInput">
+</div>
+
+<div id="panorama"></div>
+
+<script>
+
+let viewer = null;
+
+document.getElementById("imageInput")
+.addEventListener("change", function(e){
+
+const file = e.target.files[0];
+
+if(!file) return;
+
+const imageUrl = URL.createObjectURL(file);
+
+if(viewer){
+viewer.destroy();
+}
+
+viewer = pannellum.viewer("panorama",{
+type:"equirectangular",
+panorama:imageUrl,
+autoLoad:true
+});
+
+});
+
+</script>
+
+</body>
+</html>
