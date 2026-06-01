@@ -64,7 +64,13 @@ viewer.destroy();
 viewer = pannellum.viewer("panorama",{
 type:"equirectangular",
 panorama:imageUrl,
-autoLoad:true
+autoLoad:true,
+haov:240,
+vaov:120,
+vOffset:0,
+hfov:100,
+minHfov:50,
+maxHfov:120
 });
 
 });
